@@ -35,7 +35,7 @@ class ReversiGame:
         while True:
             self.screen.fill(colors.DEEP_GREY)
             self.draw_board()
-            self.set_stones()
+            self.plot_stones()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -53,22 +53,22 @@ class ReversiGame:
                 rect = (left, top, width, height)
                 pygame.draw.rect(self.screen, colors.LIGHT_GREY, rect, 0)
 
-    def set_stones(self):
+    def plot_stones(self):
         for i in range(LOGIC_WIDTH):
             for j in range(LOGIC_HEIGHT):
                 if self.status[i][j] > 0:
-                    self.set_black_stone(i, j)
+                    self.plot_black_stone(i, j)
                 elif self.status[i][j] < 0:
-                    self.set_white_stone(i, j)
+                    self.plot_white_stone(i, j)
 
-    def set_black_stone(self, x: int, y: int):
+    def plot_black_stone(self, x: int, y: int):
         pygame.draw.circle(self.screen, colors.BLACK,
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
                            STONE_OUTER_RADIUS)
 
-    def set_white_stone(self, x: int, y: int):
-        self.set_black_stone(x, y)
+    def plot_white_stone(self, x: int, y: int):
+        self.plot_black_stone(x, y)
         pygame.draw.circle(self.screen, colors.WHITE,
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
