@@ -1,3 +1,5 @@
+import time
+
 import pygame
 import colors
 import sys
@@ -63,8 +65,13 @@ class ReversiGame:
         y_num = y // UNIT
         ind = y_num * LOGIC_WIDTH + x_num
         if len(self.possible_moves[ind]) > 0:
+            is_black_turn_at_start: bool = self.is_black_turn
             self.set_stone(x_num, y_num)
+            self.is_black_turn = not self.is_black_turn
             self.check_possible_move()
+            is_black_turn_at_end: bool = self.is_black_turn
+            if is_black_turn_at_start == is_black_turn_at_end:
+                self.check_possible_move()
 
     def set_stone(self, x_num: int, y_num: int):
         ind = y_num * LOGIC_WIDTH + x_num
@@ -78,7 +85,6 @@ class ReversiGame:
             for i in range(len(self.possible_moves[ind])):
                 x_temp, y_temp = self.possible_moves[ind][i]
                 self.status[x_temp][y_temp] = -1
-        self.is_black_turn = not self.is_black_turn
 
     def check_possible_move(self):
         target: int = 1
@@ -88,6 +94,7 @@ class ReversiGame:
             enemy = 1
         self.possible_moves.clear()
         self.possible_moves = [[] for _ in range(LOGIC_TOTAL)]
+        count: int = 0
         for i in range(LOGIC_WIDTH):
             for j in range(LOGIC_HEIGHT):
                 if self.status[i][j] == target:
@@ -110,6 +117,9 @@ class ReversiGame:
                             ind = y_next * LOGIC_WIDTH + x_next
                             for cord_tuple in temp_rec:
                                 self.possible_moves[ind].append(cord_tuple)
+                            count += 1
+        if count == 0:
+            self.is_black_turn = not self.is_black_turn
 
     def mouse_move_respond(self):
         x, y = pygame.mouse.get_pos()
