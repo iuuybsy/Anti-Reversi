@@ -1,8 +1,6 @@
 import pygame
 import colors
 import sys
-import time
-
 
 UNIT: int = 61
 MID_UNIT: int = 31
@@ -17,9 +15,11 @@ GAP: int = 3
 
 LOGIC_WIDTH: int = 8
 LOGIC_HEIGHT: int = 8
+LOGIC_TOTAL = LOGIC_WIDTH * LOGIC_HEIGHT
 
 STONE_OUTER_RADIUS: int = 25
 STONE_INNER_RADIUS: int = 20
+DOT_RADIUS: int = 8
 
 DIRECTIONS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
 
@@ -37,7 +37,8 @@ class ReversiGame:
 
         self.is_black_turn: bool = True
 
-        self.possible_move_set: set[int] = set()
+        self.possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
+        self.check_possible_move()
 
     def self_play(self):
         while True:
@@ -49,22 +50,49 @@ class ReversiGame:
                 if event.type == pygame.QUIT:
                     sys.exit()
 
-            self.check_black_possible_move()
             self.mouse_move_respond()
+            left, _, _ = pygame.mouse.get_pressed()
+            if left:
+                self.click_respond()
 
             pygame.display.flip()
 
-    def check_black_possible_move(self):
+    def click_respond(self):
+        x, y = pygame.mouse.get_pos()
+        x_num = x // UNIT
+        y_num = y // UNIT
+        ind = y_num * LOGIC_WIDTH + x_num
+        if len(self.possible_moves[ind]) > 0:
+            self.set_stone(x_num, y_num)
+            self.check_possible_move()
+
+    def set_stone(self, x_num: int, y_num: int):
+        ind = y_num * LOGIC_WIDTH + x_num
+        if self.is_black_turn:
+            self.status[x_num][y_num] = 1
+            for i in range(len(self.possible_moves[ind])):
+                x_temp, y_temp = self.possible_moves[ind][i]
+                self.status[x_temp][y_temp] = 1
+        else:
+            self.status[x_num][y_num] = -1
+            for i in range(len(self.possible_moves[ind])):
+                x_temp, y_temp = self.possible_moves[ind][i]
+                self.status[x_temp][y_temp] = -1
+        self.is_black_turn = not self.is_black_turn
+
+    def check_possible_move(self):
         target: int = 1
         enemy: int = -1
         if not self.is_black_turn:
             target = -1
             enemy = 1
-        self.possible_move_set.clear()
+        self.possible_moves.clear()
+        self.possible_moves = [[] for _ in range(LOGIC_TOTAL)]
         for i in range(LOGIC_WIDTH):
             for j in range(LOGIC_HEIGHT):
                 if self.status[i][j] == target:
                     for direction in DIRECTIONS:
+                        temp_rec = []
                         x_next = i + direction[0]
                         y_next = j + direction[1]
                         if not self.is_valid_cord(x_next, y_next):
@@ -73,25 +101,32 @@ class ReversiGame:
                             continue
                         while (self.is_valid_cord(x_next, y_next) and
                                self.status[x_next][y_next] == enemy):
+                            temp_rec.append((x_next, y_next))
                             x_next = x_next + direction[0]
                             y_next = y_next + direction[1]
+                        if not self.is_valid_cord(x_next, y_next):
+                            continue
                         if self.status[x_next][y_next] == 0:
                             ind = y_next * LOGIC_WIDTH + x_next
-                            self.possible_move_set.add(ind)
-
-
-
+                            for cord_tuple in temp_rec:
+                                self.possible_moves[ind].append(cord_tuple)
 
     def mouse_move_respond(self):
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
         y_num = y // UNIT
         ind = y_num * LOGIC_WIDTH + x_num
-        if ind in self.possible_move_set:
+        if len(self.possible_moves[ind]) > 0:
             if self.is_black_turn:
                 self.plot_black_stone(x_num, y_num)
+                for i in range(len(self.possible_moves[ind])):
+                    x_temp, y_temp = self.possible_moves[ind][i]
+                    self.plot_black_dot(x_temp, y_temp)
             else:
                 self.plot_white_stone(x_num, y_num)
+                for i in range(len(self.possible_moves[ind])):
+                    x_temp, y_temp = self.possible_moves[ind][i]
+                    self.plot_white_dot(x_temp, y_temp)
 
     @classmethod
     def is_valid_cord(cls, x: int, y: int) -> bool:
@@ -128,5 +163,14 @@ class ReversiGame:
                             y * UNIT + MID_UNIT + 1),
                            STONE_INNER_RADIUS)
 
+    def plot_black_dot(self, x: int, y: int):
+        pygame.draw.circle(self.screen, colors.BLACK,
+                           (x * UNIT + MID_UNIT + 1,
+                            y * UNIT + MID_UNIT + 1),
+                           DOT_RADIUS)
 
-
+    def plot_white_dot(self, x: int, y: int):
+        pygame.draw.circle(self.screen, colors.WHITE,
+                           (x * UNIT + MID_UNIT + 1,
+                            y * UNIT + MID_UNIT + 1),
+                           DOT_RADIUS)
