@@ -52,6 +52,8 @@ class ReversiGame:
         self.is_black_turn: bool = True
         self.is_end: bool = False
 
+        self.last_move: list[int, int] = [-1, -1]
+
         self.possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
         self.check_possible_move()
 
@@ -90,6 +92,9 @@ class ReversiGame:
         self.is_black_turn: bool = True
         self.is_end: bool = False
 
+        self.last_move[0] = -1
+        self.last_move[1] = -1
+
         self.possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
         self.check_possible_move()
 
@@ -111,6 +116,7 @@ class ReversiGame:
         y_num = y // UNIT
         if y_num == 5 and 2 <= x_num <= 5:
             self.refresh()
+            time.sleep(0.5)
 
     def self_play_click_respond(self):
         x, y = pygame.mouse.get_pos()
@@ -123,19 +129,23 @@ class ReversiGame:
             self.is_black_turn = not self.is_black_turn
             self.check_possible_move()
             is_black_turn_at_end: bool = self.is_black_turn
+
+            self.last_move[0] = x_num
+            self.last_move[1] = y_num
+
             if is_black_turn_at_start == is_black_turn_at_end:
                 self.check_possible_move()
                 black_count: int = 0
                 white_count: int = 0
                 for i in range(LOGIC_WIDTH):
                     for j in range(LOGIC_HEIGHT):
-                        if self.status[i][j] == 0:
-                            break
-                        elif self.status[i][j] > 0:
+                        if self.status[i][j] > 0:
                             black_count += 1
-                        else:
+                        elif self.status[i][j] < 0:
                             white_count += 1
-                if black_count + white_count == LOGIC_WIDTH * LOGIC_HEIGHT:
+                no_black_move = not self.have_possible_move(True)
+                no_white_move = not self.have_possible_move(False)
+                if no_black_move and no_white_move:
                     self.is_end = True
                     if black_count > white_count:
                         self.is_black_turn = True
@@ -190,6 +200,32 @@ class ReversiGame:
         if count == 0:
             self.is_black_turn = not self.is_black_turn
 
+    def have_possible_move(self, is_black_turn: bool) -> bool:
+        target: int = 1
+        enemy: int = -1
+        if not is_black_turn:
+            target = -1
+            enemy = 1
+        for i in range(LOGIC_WIDTH):
+            for j in range(LOGIC_HEIGHT):
+                if self.status[i][j] == target:
+                    for direction in DIRECTIONS:
+                        x_next = i + direction[0]
+                        y_next = j + direction[1]
+                        if not self.is_valid_cord(x_next, y_next):
+                            continue
+                        if self.status[x_next][y_next] != enemy:
+                            continue
+                        while (self.is_valid_cord(x_next, y_next) and
+                               self.status[x_next][y_next] == enemy):
+                            x_next = x_next + direction[0]
+                            y_next = y_next + direction[1]
+                        if not self.is_valid_cord(x_next, y_next):
+                            continue
+                        if self.status[x_next][y_next] == 0:
+                            return True
+        return False
+
     def self_play_move_respond(self):
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
@@ -228,6 +264,8 @@ class ReversiGame:
                     self.plot_black_stone(i, j)
                 elif self.status[i][j] < 0:
                     self.plot_white_stone(i, j)
+        if self.is_valid_cord(self.last_move[0], self.last_move[1]):
+            self.plot_red_dot(self.last_move[0], self.last_move[1])
 
     def plot_black_stone(self, x: int, y: int):
         pygame.draw.circle(self.screen, colors.BLACK,
@@ -250,6 +288,12 @@ class ReversiGame:
 
     def plot_white_dot(self, x: int, y: int):
         pygame.draw.circle(self.screen, colors.WHITE,
+                           (x * UNIT + MID_UNIT + 1,
+                            y * UNIT + MID_UNIT + 1),
+                           DOT_RADIUS)
+
+    def plot_red_dot(self, x: int, y: int):
+        pygame.draw.circle(self.screen, colors.RED,
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
                            DOT_RADIUS)
