@@ -28,6 +28,7 @@ DIRECTIONS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -
 class ReversiGame:
     def __init__(self):
         pygame.init()
+        pygame.display.set_caption("Anti Reversi Game")
         self.screen = pygame.display.set_mode((BOARD_WIDTH, BOARD_HEIGHT))
 
         self.status: list[list[int]] = [[0 for _ in range(LOGIC_HEIGHT)] for __ in range(LOGIC_WIDTH)]
