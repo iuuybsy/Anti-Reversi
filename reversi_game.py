@@ -24,6 +24,18 @@ DOT_RADIUS: int = 8
 
 DIRECTIONS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
 
+WINNER_X: int = UNIT
+WINNER_Y: int = 2 * UNIT
+WINNER_WIDTH: int = 6 * UNIT
+WINNER_HEIGHT: int = 2 * UNIT
+WINNER_TEXT_SIZE = 50
+
+REPLAY_X = 2 * UNIT
+REPLAY_Y = 5 * UNIT
+REPLAY_WIDTH = 4 * UNIT
+REPLAY_HEIGHT = UNIT
+REPLAY_TEXT_SIZE = 30
+
 
 class ReversiGame:
     def __init__(self):
@@ -55,15 +67,52 @@ class ReversiGame:
 
             if self.is_end:
                 self.plot_rect()
-            else:
-                self.mouse_move_respond()
+                self.end_move_respond()
                 left, _, _ = pygame.mouse.get_pressed()
                 if left:
-                    self.click_respond()
+                    self.end_click_respond()
+            else:
+                self.self_play_move_respond()
+                left, _, _ = pygame.mouse.get_pressed()
+                if left:
+                    self.self_play_click_respond()
 
             pygame.display.flip()
 
-    def click_respond(self):
+    def refresh(self):
+        self.status.clear()
+        self.status: list[list[int]] = [[0 for _ in range(LOGIC_HEIGHT)] for __ in range(LOGIC_WIDTH)]
+        self.status[3][3] = 1
+        self.status[3][4] = -1
+        self.status[4][3] = -1
+        self.status[4][4] = 1
+
+        self.is_black_turn: bool = True
+        self.is_end: bool = False
+
+        self.possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
+        self.check_possible_move()
+
+    def end_move_respond(self):
+        x, y = pygame.mouse.get_pos()
+        x_num = x // UNIT
+        y_num = y // UNIT
+        if y_num == 5 and 2 <= x_num <= 5:
+            rect_color = colors.WHITE if self.is_black_turn else colors.BLACK
+            font_color = colors.BLACK if self.is_black_turn else colors.WHITE
+            text_string = "restart"
+            self.rect_with_text(rect_color, font_color, REPLAY_X, REPLAY_Y,
+                                REPLAY_WIDTH, REPLAY_HEIGHT, REPLAY_TEXT_SIZE,
+                                text_string=text_string)
+
+    def end_click_respond(self):
+        x, y = pygame.mouse.get_pos()
+        x_num = x // UNIT
+        y_num = y // UNIT
+        if y_num == 5 and 2 <= x_num <= 5:
+            self.refresh()
+
+    def self_play_click_respond(self):
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
         y_num = y // UNIT
@@ -141,7 +190,7 @@ class ReversiGame:
         if count == 0:
             self.is_black_turn = not self.is_black_turn
 
-    def mouse_move_respond(self):
+    def self_play_move_respond(self):
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
         y_num = y // UNIT
@@ -205,6 +254,20 @@ class ReversiGame:
                             y * UNIT + MID_UNIT + 1),
                            DOT_RADIUS)
 
+    def rect_with_text(self, rect_color, font_color, x_start, y_start, width, height,
+                       text_size, border_radius=10, text_string=""):
+        pygame.draw.rect(self.screen, rect_color,
+                         (x_start, y_start,
+                          width, height),
+                         border_radius=border_radius)
+        font = pygame.font.SysFont("Century", text_size)
+        text = font.render(text_string, True, font_color)
+        text_width = text.get_width()
+        text_height = text.get_height()
+        x_pix = width // 2 - text_width // 2 + x_start
+        y_pix = height // 2 - text_height // 2 + y_start
+        self.screen.blit(text, (x_pix, y_pix))
+
     def plot_rect(self):
         rect_color = colors.BLACK if self.is_black_turn else colors.WHITE
         font_color = colors.WHITE if self.is_black_turn else colors.BLACK
@@ -227,14 +290,10 @@ class ReversiGame:
                                         j * UNIT + MID_UNIT + 1),
                                        STONE_INNER_RADIUS)
 
-        pygame.draw.rect(self.screen, rect_color,
-                         (UNIT, 3 * UNIT,
-                          6 * UNIT, 2 * UNIT),
-                         border_radius=10)
-        font = pygame.font.SysFont("Century", 50)
-        text = font.render(text_string, False, font_color)
-        text_width = text.get_width()
-        text_height = text.get_height()
-        x_pix = BOARD_WIDTH // 2 - text_width // 2
-        y_pix = BOARD_HEIGHT // 2 - text_height // 2
-        self.screen.blit(text, (x_pix, y_pix))
+        self.rect_with_text(rect_color, font_color, WINNER_X, WINNER_Y,
+                            WINNER_WIDTH, WINNER_HEIGHT, WINNER_TEXT_SIZE,
+                            text_string=text_string)
+
+        self.rect_with_text(rect_color, font_color, REPLAY_X, REPLAY_Y,
+                            REPLAY_WIDTH, REPLAY_HEIGHT, REPLAY_TEXT_SIZE,
+                            text_string="restart")
