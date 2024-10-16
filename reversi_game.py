@@ -1,5 +1,3 @@
-import time
-
 import pygame
 import colors
 import sys
@@ -38,6 +36,7 @@ class ReversiGame:
         self.status[4][4] = 1
 
         self.is_black_turn: bool = True
+        self.is_end: bool = False
 
         self.possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
         self.check_possible_move()
@@ -52,10 +51,13 @@ class ReversiGame:
                 if event.type == pygame.QUIT:
                     sys.exit()
 
-            self.mouse_move_respond()
-            left, _, _ = pygame.mouse.get_pressed()
-            if left:
-                self.click_respond()
+            if self.is_end:
+                self.plot_rect()
+            else:
+                self.mouse_move_respond()
+                left, _, _ = pygame.mouse.get_pressed()
+                if left:
+                    self.click_respond()
 
             pygame.display.flip()
 
@@ -72,6 +74,22 @@ class ReversiGame:
             is_black_turn_at_end: bool = self.is_black_turn
             if is_black_turn_at_start == is_black_turn_at_end:
                 self.check_possible_move()
+                black_count: int = 0
+                white_count: int = 0
+                for i in range(LOGIC_WIDTH):
+                    for j in range(LOGIC_HEIGHT):
+                        if self.status[i][j] == 0:
+                            break
+                        elif self.status[i][j] > 0:
+                            black_count += 1
+                        else:
+                            white_count += 1
+                if black_count + white_count == LOGIC_WIDTH * LOGIC_HEIGHT:
+                    self.is_end = True
+                    if black_count > white_count:
+                        self.is_black_turn = True
+                    else:
+                        self.is_black_turn = False
 
     def set_stone(self, x_num: int, y_num: int):
         ind = y_num * LOGIC_WIDTH + x_num
@@ -184,3 +202,20 @@ class ReversiGame:
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
                            DOT_RADIUS)
+
+    def plot_rect(self):
+        rect_color = colors.BLACK if self.is_black_turn else colors.WHITE
+        font_color = colors.WHITE if self.is_black_turn else colors.BLACK
+        text_string = "Black Win!" if self.is_black_turn else "White Win!"
+
+        pygame.draw.rect(self.screen, rect_color,
+                         (UNIT, 3 * UNIT,
+                          6 * UNIT, 2 * UNIT),
+                         border_radius=10)
+        font = pygame.font.SysFont("Century", 50)
+        text = font.render(text_string, False, font_color)
+        text_width = text.get_width()
+        text_height = text.get_height()
+        x_pix = BOARD_WIDTH // 2 - text_width // 2
+        y_pix = BOARD_HEIGHT // 2 - text_height // 2
+        self.screen.blit(text, (x_pix, y_pix))
