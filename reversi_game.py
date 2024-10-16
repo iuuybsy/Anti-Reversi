@@ -1,6 +1,7 @@
 import pygame
 import colors
 import sys
+import time
 
 UNIT: int = 61
 MID_UNIT: int = 31
@@ -207,6 +208,23 @@ class ReversiGame:
         rect_color = colors.BLACK if self.is_black_turn else colors.WHITE
         font_color = colors.WHITE if self.is_black_turn else colors.BLACK
         text_string = "Black Win!" if self.is_black_turn else "White Win!"
+
+        for i in range(LOGIC_WIDTH):
+            for j in range(LOGIC_HEIGHT):
+                if self.status[i][j] > 0:
+                    pygame.draw.circle(self.screen, colors.BLACK_FINAL,
+                                       (i * UNIT + MID_UNIT + 1,
+                                        j * UNIT + MID_UNIT + 1),
+                                       STONE_OUTER_RADIUS)
+                elif self.status[i][j] < 0:
+                    pygame.draw.circle(self.screen, colors.BLACK_FINAL,
+                                       (i * UNIT + MID_UNIT + 1,
+                                        j * UNIT + MID_UNIT + 1),
+                                       STONE_OUTER_RADIUS)
+                    pygame.draw.circle(self.screen, colors.WHITE_FINAL,
+                                       (i * UNIT + MID_UNIT + 1,
+                                        j * UNIT + MID_UNIT + 1),
+                                       STONE_INNER_RADIUS)
 
         pygame.draw.rect(self.screen, rect_color,
                          (UNIT, 3 * UNIT,
