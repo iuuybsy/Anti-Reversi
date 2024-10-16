@@ -68,7 +68,7 @@ class ReversiGame:
                     sys.exit()
 
             if self.is_end:
-                self.plot_rect()
+                self.winner_judgement_plot()
                 self.end_move_respond()
                 left, _, _ = pygame.mouse.get_pressed()
                 if left:
@@ -312,7 +312,7 @@ class ReversiGame:
         y_pix = height // 2 - text_height // 2 + y_start
         self.screen.blit(text, (x_pix, y_pix))
 
-    def plot_rect(self):
+    def winner_judgement_plot(self):
         rect_color = colors.BLACK if self.is_black_turn else colors.WHITE
         font_color = colors.WHITE if self.is_black_turn else colors.BLACK
         text_string = "Black Win!" if self.is_black_turn else "White Win!"
