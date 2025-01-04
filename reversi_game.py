@@ -58,6 +58,10 @@ class ReversiGame:
         self.check_possible_move()
 
     def self_play(self):
+        """
+        Self play mode
+        :return: None
+        """
         while True:
             self.screen.fill(colors.DEEP_GREY)
             self.draw_board()
@@ -69,10 +73,10 @@ class ReversiGame:
 
             if self.is_end:
                 self.winner_judgement_plot()
-                self.end_move_respond()
+                self.change_restart_color()
                 left, _, _ = pygame.mouse.get_pressed()
                 if left:
-                    self.end_click_respond()
+                    self.restart_click_respond()
             else:
                 self.self_play_move_respond()
                 left, _, _ = pygame.mouse.get_pressed()
@@ -82,8 +86,12 @@ class ReversiGame:
             pygame.display.flip()
 
     def refresh(self):
+        """
+        After a game ends, refresh the board
+        :return: None
+        """
         self.status.clear()
-        self.status: list[list[int]] = [[0 for _ in range(LOGIC_HEIGHT)] for __ in range(LOGIC_WIDTH)]
+        self.status = [[0 for _ in range(LOGIC_HEIGHT)] for __ in range(LOGIC_WIDTH)]
         self.status[3][3] = 1
         self.status[3][4] = -1
         self.status[4][3] = -1
@@ -92,13 +100,16 @@ class ReversiGame:
         self.is_black_turn: bool = True
         self.is_end: bool = False
 
-        self.last_move[0] = -1
-        self.last_move[1] = -1
+        self.last_move = [-1, -1]
 
-        self.possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
+        self.possible_moves = [[] for _ in range(LOGIC_TOTAL)]
         self.check_possible_move()
 
-    def end_move_respond(self):
+    def change_restart_color(self):
+        """
+        Change the restart button's color when the mouse is on it
+        :return: None
+        """
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
         y_num = y // UNIT
@@ -110,7 +121,11 @@ class ReversiGame:
                                 REPLAY_WIDTH, REPLAY_HEIGHT, REPLAY_TEXT_SIZE,
                                 text_string=text_string)
 
-    def end_click_respond(self):
+    def restart_click_respond(self):
+        """
+        Click the restart button to restart the game
+        :return: None
+        """
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
         y_num = y // UNIT
@@ -119,6 +134,10 @@ class ReversiGame:
             time.sleep(0.5)
 
     def self_play_click_respond(self):
+        """
+        Mouse click respond for self play mode
+        :return: None
+        """
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
         y_num = y // UNIT
@@ -147,12 +166,15 @@ class ReversiGame:
                 no_white_move = not self.have_possible_move(False)
                 if no_black_move and no_white_move:
                     self.is_end = True
-                    if black_count > white_count:
-                        self.is_black_turn = True
-                    else:
-                        self.is_black_turn = False
+                    self.is_black_turn = black_count > white_count
 
     def set_stone(self, x_num: int, y_num: int):
+        """
+        Set the stone and the stones that can be flipped
+        :param x_num: cord of x-axis
+        :param y_num: cord of y-axis
+        :return: None
+        """
         ind = y_num * LOGIC_WIDTH + x_num
         if self.is_black_turn:
             self.status[x_num][y_num] = 1
@@ -166,6 +188,10 @@ class ReversiGame:
                 self.status[x_temp][y_temp] = -1
 
     def check_possible_move(self):
+        """
+        Check the possible moves for current situation
+        :return: None
+        """
         target: int = 1
         enemy: int = -1
         if not self.is_black_turn:
@@ -201,6 +227,11 @@ class ReversiGame:
             self.is_black_turn = not self.is_black_turn
 
     def have_possible_move(self, is_black_turn: bool) -> bool:
+        """
+        Check if there's a possible move
+        :param is_black_turn: Flag to see if it's black's turn
+        :return: Flag to see if there's a possible move
+        """
         target: int = 1
         enemy: int = -1
         if not is_black_turn:
@@ -227,6 +258,10 @@ class ReversiGame:
         return False
 
     def self_play_move_respond(self):
+        """
+        Plot the possible moves for self play mode
+        :return: None
+        """
         x, y = pygame.mouse.get_pos()
         x_num = x // UNIT
         y_num = y // UNIT
@@ -245,9 +280,19 @@ class ReversiGame:
 
     @classmethod
     def is_valid_cord(cls, x: int, y: int) -> bool:
+        """
+        Check if the cord is valid
+        :param x: cord of x-axis
+        :param y: cord of y-axis
+        :return: flag to see if the cord is valid
+        """
         return 0 <= x < LOGIC_WIDTH and 0 <= y < LOGIC_HEIGHT
 
     def draw_board(self):
+        """
+        Draw the board
+        :return: None
+        """
         for i in range(BOARD_WIDTH_UNIT_NUM):
             for j in range(BOARD_HEIGHT_UNIT_NUM):
                 left = i * UNIT + GAP
@@ -258,6 +303,10 @@ class ReversiGame:
                 pygame.draw.rect(self.screen, colors.LIGHT_GREY, rect, 0)
 
     def plot_stones(self):
+        """
+        Plot the stones
+        :return: None
+        """
         for i in range(LOGIC_WIDTH):
             for j in range(LOGIC_HEIGHT):
                 if self.status[i][j] > 0:
@@ -268,12 +317,24 @@ class ReversiGame:
             self.plot_red_dot(self.last_move[0], self.last_move[1])
 
     def plot_black_stone(self, x: int, y: int):
+        """
+        Plot a black stone
+        :param x: cord of x-axis
+        :param y: cord of y-axis
+        :return: None
+        """
         pygame.draw.circle(self.screen, colors.BLACK,
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
                            STONE_OUTER_RADIUS)
 
     def plot_white_stone(self, x: int, y: int):
+        """
+        Plot a white stone
+        :param x: cord of x-axis
+        :param y: cord of y-axis
+        :return: None
+        """
         self.plot_black_stone(x, y)
         pygame.draw.circle(self.screen, colors.WHITE,
                            (x * UNIT + MID_UNIT + 1,
@@ -281,25 +342,57 @@ class ReversiGame:
                            STONE_INNER_RADIUS)
 
     def plot_black_dot(self, x: int, y: int):
+        """
+        Plot a black dot over a white stone
+        :param x: cord of x-axis
+        :param y: cord of y-axis
+        :return: None
+        """
         pygame.draw.circle(self.screen, colors.BLACK,
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
                            DOT_RADIUS)
 
     def plot_white_dot(self, x: int, y: int):
+        """
+        Plot a white dot over a black stone
+        :param x: cord of x-axis
+        :param y: cord of y-axis
+        :return: None
+        """
         pygame.draw.circle(self.screen, colors.WHITE,
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
                            DOT_RADIUS)
 
     def plot_red_dot(self, x: int, y: int):
+        """
+        Plot a red dot over a stone
+        :param x: cord of x-axis
+        :param y: cord of y-axis
+        :return: None
+        """
         pygame.draw.circle(self.screen, colors.RED,
                            (x * UNIT + MID_UNIT + 1,
                             y * UNIT + MID_UNIT + 1),
                            DOT_RADIUS)
 
-    def rect_with_text(self, rect_color, font_color, x_start, y_start, width, height,
-                       text_size, border_radius=10, text_string=""):
+    def rect_with_text(self, rect_color: tuple[int], font_color: tuple[int],
+                       x_start: int, y_start: int, width: int, height: int,
+                       text_size: int, border_radius: int = 10, text_string: str = ""):
+        """
+        Plot a rectangle with text
+        :param rect_color: color of the rectangle
+        :param font_color: color of the text
+        :param x_start: rectangle's up left cord of x-axis
+        :param y_start: rectangle's up left cord of y-axis
+        :param width: rectangle's width of blocks
+        :param height: rectangle's height of blocks
+        :param text_size: size of text font
+        :param border_radius: size of border radius
+        :param text_string: text to be plotted on rectangle
+        :return: None
+        """
         pygame.draw.rect(self.screen, rect_color,
                          (x_start, y_start,
                           width, height),
@@ -313,6 +406,10 @@ class ReversiGame:
         self.screen.blit(text, (x_pix, y_pix))
 
     def winner_judgement_plot(self):
+        """
+        Plot the winner on screen
+        :return: None
+        """
         rect_color = colors.BLACK if self.is_black_turn else colors.WHITE
         font_color = colors.WHITE if self.is_black_turn else colors.BLACK
         text_string = "Black Win!" if self.is_black_turn else "White Win!"
