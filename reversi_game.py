@@ -21,7 +21,8 @@ STONE_OUTER_RADIUS: int = 25
 STONE_INNER_RADIUS: int = 20
 DOT_RADIUS: int = 8
 
-DIRECTIONS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+DIRECTIONS: list[list[int]] = [[1, 0], [1, 1], [0, 1], [-1, 1],
+                               [-1, 0], [-1, -1], [0, -1], [1, -1]]
 
 WINNER_X: int = UNIT
 WINNER_Y: int = 2 * UNIT
@@ -29,21 +30,42 @@ WINNER_WIDTH: int = 6 * UNIT
 WINNER_HEIGHT: int = 2 * UNIT
 WINNER_TEXT_SIZE = 50
 
-REPLAY_X = 2 * UNIT
-REPLAY_Y = 5 * UNIT
-REPLAY_WIDTH = 4 * UNIT
-REPLAY_HEIGHT = UNIT
-REPLAY_TEXT_SIZE = 30
+REPLAY_X: int = 2 * UNIT
+REPLAY_Y: int = 5 * UNIT
+REPLAY_WIDTH: int = 4 * UNIT
+REPLAY_HEIGHT: int = UNIT
+REPLAY_TEXT_SIZE: int = 30
 
-DEEP_GREY = (100, 100, 100)
-LIGHT_GREY = (125, 125, 125)
+DEEP_GREY: tuple[int, int, int] = (100, 100, 100)
+LIGHT_GREY: tuple[int, int, int] = (125, 125, 125)
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
+BLACK: tuple[int, int, int] = (0, 0, 0)
+WHITE: tuple[int, int, int] = (255, 255, 255)
+RED: tuple[int, int, int] = (255, 0, 0)
 
-BLACK_FINAL = (50, 50, 50)
-WHITE_FINAL = (205, 205, 205)
+BLACK_FINAL: tuple[int, int, int] = (50, 50, 50)
+WHITE_FINAL: tuple[int, int, int] = (205, 205, 205)
+
+
+def get_mouse_cord() -> tuple[int, int]:
+    """
+    Get the mouse block ord
+    :return: (x_num: int, y_num: int)
+    """
+    x, y = pygame.mouse.get_pos()
+    x_num = x // UNIT
+    y_num = y // UNIT
+    return x_num, y_num
+
+
+def is_valid_cord(x: int, y: int) -> bool:
+    """
+    Check if the cord is valid
+    :param x: cord of x-axis
+    :param y: cord of y-axis
+    :return: flag to see if the cord is valid
+    """
+    return 0 <= x < LOGIC_WIDTH and 0 <= y < LOGIC_HEIGHT
 
 
 class ReversiGame:
@@ -61,7 +83,7 @@ class ReversiGame:
         self.is_black_turn: bool = True
         self.is_end: bool = False
 
-        self.last_move: list[int, int] = [-1, -1]
+        self.last_move: list[int] = [-1, -1]
 
         self.possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
         self.check_possible_move()
@@ -119,13 +141,11 @@ class ReversiGame:
         Change the restart button's color when the mouse is on it
         :return: None
         """
-        x, y = pygame.mouse.get_pos()
-        x_num = x // UNIT
-        y_num = y // UNIT
+        x_num, y_num = get_mouse_cord()
         if y_num == 5 and 2 <= x_num <= 5:
+            text_string = "restart"
             rect_color = WHITE if self.is_black_turn else BLACK
             font_color = BLACK if self.is_black_turn else WHITE
-            text_string = "restart"
             self.rect_with_text(rect_color, font_color, REPLAY_X, REPLAY_Y,
                                 REPLAY_WIDTH, REPLAY_HEIGHT, REPLAY_TEXT_SIZE,
                                 text_string=text_string)
@@ -135,9 +155,7 @@ class ReversiGame:
         Click the restart button to restart the game
         :return: None
         """
-        x, y = pygame.mouse.get_pos()
-        x_num = x // UNIT
-        y_num = y // UNIT
+        x_num, y_num = get_mouse_cord()
         if y_num == 5 and 2 <= x_num <= 5:
             self.refresh()
             time.sleep(0.5)
@@ -147,9 +165,7 @@ class ReversiGame:
         Mouse click respond for self play mode
         :return: None
         """
-        x, y = pygame.mouse.get_pos()
-        x_num = x // UNIT
-        y_num = y // UNIT
+        x_num, y_num = get_mouse_cord()
         ind = y_num * LOGIC_WIDTH + x_num
         if len(self.possible_moves[ind]) > 0:
             is_black_turn_at_start: bool = self.is_black_turn
@@ -171,9 +187,9 @@ class ReversiGame:
                             black_count += 1
                         elif self.status[i][j] < 0:
                             white_count += 1
-                no_black_move = not self.have_possible_move(is_black_turn=True)
-                no_white_move = not self.have_possible_move(is_black_turn=False)
-                if no_black_move and no_white_move:
+                have_black_move, _ = self.have_possible_move(is_black_turn=True)
+                have_white_move, _ = self.have_possible_move(is_black_turn=False)
+                if not (have_black_move or have_white_move):
                     self.is_end = True
                     self.is_black_turn = black_count > white_count
 
@@ -185,117 +201,82 @@ class ReversiGame:
         :return: None
         """
         ind = y_num * LOGIC_WIDTH + x_num
-        if self.is_black_turn:
-            self.status[x_num][y_num] = 1
-            for i in range(len(self.possible_moves[ind])):
-                x_temp, y_temp = self.possible_moves[ind][i]
-                self.status[x_temp][y_temp] = 1
-        else:
-            self.status[x_num][y_num] = -1
-            for i in range(len(self.possible_moves[ind])):
-                x_temp, y_temp = self.possible_moves[ind][i]
-                self.status[x_temp][y_temp] = -1
+        stone_sign = 1 if self.is_black_turn else -1
+        self.status[x_num][y_num] = stone_sign
+        for i in range(len(self.possible_moves[ind])):
+            x_temp, y_temp = self.possible_moves[ind][i]
+            self.status[x_temp][y_temp] = stone_sign
+
+    def get_possible_moves(self, is_black_turn: bool) -> list[list[tuple[int, int]]]:
+        """
+        Get the possible moves for current situation
+        :param is_black_turn:
+        :return: list of possible moves for every block
+        """
+        target: int = 1 if is_black_turn else -1
+        enemy: int = -target
+        possible_moves: list[list[tuple[int, int]]] = [[] for _ in range(LOGIC_TOTAL)]
+        for i in range(LOGIC_WIDTH):
+            for j in range(LOGIC_HEIGHT):
+                if self.status[i][j] == target:
+                    for direction in DIRECTIONS:
+                        temp_rec = set()
+                        x_next = i + direction[0]
+                        y_next = j + direction[1]
+                        if not is_valid_cord(x_next, y_next):
+                            continue
+                        if self.status[x_next][y_next] != enemy:
+                            continue
+                        while (is_valid_cord(x_next, y_next) and
+                               self.status[x_next][y_next] == enemy):
+                            temp_rec.add((x_next, y_next))
+                            x_next = x_next + direction[0]
+                            y_next = y_next + direction[1]
+                        if not is_valid_cord(x_next, y_next):
+                            continue
+                        if self.status[x_next][y_next] == 0:
+                            ind = y_next * LOGIC_WIDTH + x_next
+                            for cord_tuple in temp_rec:
+                                possible_moves[ind].append(cord_tuple)
+        return possible_moves
 
     def check_possible_move(self):
         """
         Check the possible moves for current situation
         :return: None
         """
-        target: int = 1
-        enemy: int = -1
-        if not self.is_black_turn:
-            target = -1
-            enemy = 1
-        self.possible_moves.clear()
-        self.possible_moves = [[] for _ in range(LOGIC_TOTAL)]
-        count: int = 0
-        for i in range(LOGIC_WIDTH):
-            for j in range(LOGIC_HEIGHT):
-                if self.status[i][j] == target:
-                    for direction in DIRECTIONS:
-                        temp_rec = []
-                        x_next = i + direction[0]
-                        y_next = j + direction[1]
-                        if not self.is_valid_cord(x_next, y_next):
-                            continue
-                        if self.status[x_next][y_next] != enemy:
-                            continue
-                        while (self.is_valid_cord(x_next, y_next) and
-                               self.status[x_next][y_next] == enemy):
-                            temp_rec.append((x_next, y_next))
-                            x_next = x_next + direction[0]
-                            y_next = y_next + direction[1]
-                        if not self.is_valid_cord(x_next, y_next):
-                            continue
-                        if self.status[x_next][y_next] == 0:
-                            ind = y_next * LOGIC_WIDTH + x_next
-                            for cord_tuple in temp_rec:
-                                self.possible_moves[ind].append(cord_tuple)
-                            count += 1
-        if count == 0:
+        have_possible_move, self.possible_moves = self.have_possible_move(self.is_black_turn)
+        if not have_possible_move:
             self.is_black_turn = not self.is_black_turn
 
-    def have_possible_move(self, is_black_turn: bool) -> bool:
+    def have_possible_move(self, is_black_turn: bool) -> (
+            tuple)[bool, list[list[tuple[int, int]]]]:
         """
         Check if there's a possible move
         :param is_black_turn: Flag to see if it's black's turn
         :return: Flag to see if there's a possible move
         """
-        target: int = 1
-        enemy: int = -1
-        if not is_black_turn:
-            target = -1
-            enemy = 1
-        for i in range(LOGIC_WIDTH):
-            for j in range(LOGIC_HEIGHT):
-                if self.status[i][j] == target:
-                    for direction in DIRECTIONS:
-                        x_next = i + direction[0]
-                        y_next = j + direction[1]
-                        if not self.is_valid_cord(x_next, y_next):
-                            continue
-                        if self.status[x_next][y_next] != enemy:
-                            continue
-                        while (self.is_valid_cord(x_next, y_next) and
-                               self.status[x_next][y_next] == enemy):
-                            x_next = x_next + direction[0]
-                            y_next = y_next + direction[1]
-                        if not self.is_valid_cord(x_next, y_next):
-                            continue
-                        if self.status[x_next][y_next] == 0:
-                            return True
-        return False
+        possible_moves: list[list[tuple[int, int]]] = self.get_possible_moves(is_black_turn)
+        count: int = sum(len(possible_move_list) for possible_move_list in possible_moves)
+        return count > 0, possible_moves
 
     def self_play_move_respond(self):
         """
         Plot the possible moves for self play mode
         :return: None
         """
-        x, y = pygame.mouse.get_pos()
-        x_num = x // UNIT
-        y_num = y // UNIT
+        x_num, y_num = get_mouse_cord()
+        if len(self.possible_moves) == 0:
+            return
         ind = y_num * LOGIC_WIDTH + x_num
-        if len(self.possible_moves[ind]) > 0:
-            if self.is_black_turn:
-                self.plot_black_stone(x_num, y_num)
-                for i in range(len(self.possible_moves[ind])):
-                    x_temp, y_temp = self.possible_moves[ind][i]
-                    self.plot_black_dot(x_temp, y_temp)
-            else:
-                self.plot_white_stone(x_num, y_num)
-                for i in range(len(self.possible_moves[ind])):
-                    x_temp, y_temp = self.possible_moves[ind][i]
-                    self.plot_white_dot(x_temp, y_temp)
-
-    @classmethod
-    def is_valid_cord(cls, x: int, y: int) -> bool:
-        """
-        Check if the cord is valid
-        :param x: cord of x-axis
-        :param y: cord of y-axis
-        :return: flag to see if the cord is valid
-        """
-        return 0 <= x < LOGIC_WIDTH and 0 <= y < LOGIC_HEIGHT
+        stone_plot_func = self.plot_black_stone if self.is_black_turn \
+            else self.plot_white_stone
+        dot_plot_func = self.plot_black_dot if self.is_black_turn \
+            else self.plot_white_dot
+        if self.status[x_num][y_num] == 0:
+            stone_plot_func(x_num, y_num)
+            for x_temp, y_temp in self.possible_moves[ind]:
+                dot_plot_func(x_temp, y_temp)
 
     def draw_board(self):
         """
@@ -322,7 +303,7 @@ class ReversiGame:
                     self.plot_black_stone(i, j)
                 elif self.status[i][j] < 0:
                     self.plot_white_stone(i, j)
-        if self.is_valid_cord(self.last_move[0], self.last_move[1]):
+        if is_valid_cord(self.last_move[0], self.last_move[1]):
             self.plot_red_dot(self.last_move[0], self.last_move[1])
 
     def plot_black_stone(self, x: int, y: int):
