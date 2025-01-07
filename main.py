@@ -1,9 +1,10 @@
-from reversi_game import ReversiGame
+# from reversi_game import ReversiGame
+from new_reversi_game import NewReversiGame
 
 
 def main():
-    game = ReversiGame()
-    game.self_play()
+    game = NewReversiGame()
+    game.play()
 
 
 if __name__ == "__main__":
