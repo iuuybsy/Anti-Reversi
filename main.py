@@ -1,9 +1,8 @@
-# from reversi_game import ReversiGame
-from new_reversi_game import NewReversiGame
+from reversi_game import ReversiGame
 
 
 def main():
-    game = NewReversiGame()
+    game = ReversiGame()
     game.play()
 
 
