@@ -1,4 +1,10 @@
 from reversi_game import ReversiGame
 
-game = ReversiGame()
-game.self_play()
+
+def main():
+    game = ReversiGame()
+    game.play()
+
+
+if __name__ == "__main__":
+    main()
